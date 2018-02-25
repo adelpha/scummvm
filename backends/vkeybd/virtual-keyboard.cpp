@@ -24,6 +24,10 @@
 
 #ifdef ENABLE_VKEYBD
 
+#ifdef POSIX
+#include <unistd.h>
+#endif
+
 #include "backends/vkeybd/virtual-keyboard.h"
 
 #include "backends/vkeybd/virtual-keyboard-gui.h"
@@ -37,6 +41,14 @@
 #define KEY_END_CHAR (']')
 
 namespace Common {
+
+#ifdef POSIX
+void sleepcp(int milliseconds);
+void sleepcp(int milliseconds) // Cross-platform sleep function
+{
+    usleep(milliseconds * 1000);
+}
+#endif
 
 VirtualKeyboard::VirtualKeyboard() : _currentMode(0) {
 	assert(g_system);
@@ -248,6 +260,10 @@ void VirtualKeyboard::show() {
 			eventMan->pushEvent(evt);
 			evt.type = EVENT_KEYUP;
 			eventMan->pushEvent(evt);
+#ifdef POSIX
+			sleepcp(500);
+			debug("sleeping 500ms");
+#endif
 		}
 	} else {
 		_keyQueue.clear();
