@@ -45,13 +45,89 @@
 // #define JOY_INVERT_Y
 #define JOY_XAXIS 0
 #define JOY_YAXIS 1
-// buttons
-#define JOY_BUT_LMOUSE 0
-#define JOY_BUT_RMOUSE 2
-#define JOY_BUT_ESCAPE 3
-#define JOY_BUT_PERIOD 1
-#define JOY_BUT_SPACE 4
-#define JOY_BUT_F5 5
+
+// ScummVM SDL default button layout - if the controller is configured below these get overwritten
+static uint8 JOY_BUT_LMOUSE=0;  // LMB
+static uint8 JOY_BUT_RMOUSE=2;  // RMB
+static uint8 JOY_BUT_ESCAPE=3;  // Esc
+static uint8 JOY_BUT_PERIOD=1;  // .
+static uint8 JOY_BUT_SPACE=4;   // Space
+static uint8 JOY_BUT_F5=5;      // F5
+static uint8 JOY_BUT_VKBD=10;   // Virtual Keyboard (no key assigned by default)
+
+const char *charPS3 = "Sony PLAYSTATION(R)3 Controller"; // must match SDL name for PS3 controller
+void setPS3buttons()
+{
+	JOY_BUT_LMOUSE=14;  // Cross (LMB)
+	JOY_BUT_RMOUSE=13;  // Circle (RMB)
+	JOY_BUT_ESCAPE=15;  // Square (Esc)
+	JOY_BUT_PERIOD=12;  // Triangle (.)
+	JOY_BUT_SPACE=3;    // Start (Space)
+	JOY_BUT_F5=0;       // Select (F5)
+	JOY_BUT_VKBD=10;    // Virtual Keyboard - L1 (no default in SDL2)
+}
+
+const char *charX360 = "Microsoft X-Box 360 pad"; // must match SDL name for X360 controller
+void setX360buttons()
+{
+	JOY_BUT_LMOUSE=0;   // A (LMB)
+	JOY_BUT_RMOUSE=1;   // B (RMB)
+	JOY_BUT_ESCAPE=2;   // X (Esc)
+	JOY_BUT_PERIOD=3;   // Y (.)
+	JOY_BUT_SPACE=9;    // Start (Space)
+	JOY_BUT_F5=8;       // Select (F5)
+	JOY_BUT_VKBD=4;     // Virtual Keyboard - LB (no default in SDL2)
+}
+
+const char *charBuffaloSNES = "USB,2-axis 8-button gamepad  "; // must match SDL name for Buffalo Classic USB Gamepad
+void setBuffaloSNESbuttons()
+{
+	// Same layout as PSX and X360 - reverse A&B and X&Y for SNES style controls
+	JOY_BUT_LMOUSE=1;   // B (LMB)
+	JOY_BUT_RMOUSE=0;   // A (RMB)
+	JOY_BUT_ESCAPE=3;   // Y (Esc)
+	JOY_BUT_PERIOD=2;   // X (.)
+	JOY_BUT_SPACE=7;    // Start ( )
+	JOY_BUT_F5=6;       // Select (F5)
+	JOY_BUT_VKBD=4;     // Virtual Keyboard - LB (no default in SDL2)
+}
+
+const char *charF300 = "MAYFLASH Arcade Fightstick F300"; // must match SDL name for MAYFLASH Arcade Fightstick F300
+void setF300buttons()
+{
+	// Unlike the above, I've set Start to F5 (because I think it'll be used more)
+	// The small Home button is the Pause (Spacebar) key
+	// On this controller, confusingly, RT is on the LEFT and LT is on the RIGHT
+	JOY_BUT_LMOUSE=1;   // A (LMB)
+	JOY_BUT_RMOUSE=2;   // B (RMB)
+	JOY_BUT_ESCAPE=0;   // X (Esc)
+	//JOY_BUT_ESCAPE=6; // LT - uncomment if you want to use for Escape
+	JOY_BUT_PERIOD=3;   // Y (.)
+	//JOY_BUT_PERIOD=7; // RT - uncomment if you want to use for Period
+	JOY_BUT_SPACE=12;   // Home (Space)
+	JOY_BUT_F5=9;       // Start (F5)
+	JOY_BUT_VKBD=5;     // Virtual Keyboard - LB (no default in SDL2)
+}
+
+const char *charRaphClassic = "raphnet technologies 1-player WUSBMote v2.1"; // must match SDL name for Raphnet Adapter
+void setRaphClassicbuttons()
+{
+	// Same layout as PSX and X360 - reverse A&B and X&Y for SNES style controls
+	JOY_BUT_LMOUSE=1;   // B (LMB)
+	JOY_BUT_RMOUSE=4;   // A (RMB)
+	JOY_BUT_ESCAPE=0;   // Y (Esc)
+	JOY_BUT_PERIOD=5;   // X (.)
+	JOY_BUT_SPACE=3;    // Start ( )
+	JOY_BUT_F5=2;       // Select (F5)
+	JOY_BUT_VKBD=5;     // Virtual Keyboard - LB (no default in SDL2)
+}
+
+int totallynotstrcmp(const char* s1, const char* s2)
+{
+    while(*s1 && (*s1==*s2))
+        s1++,s2++;
+    return (*(const unsigned char*)s1 > *(const unsigned char*)s2) - (*(const unsigned char*)s1 < *(const unsigned char*)s2);
+}
 
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 static uint32 convUTF8ToUTF32(const char *src) {
@@ -100,6 +176,28 @@ SdlEventSource::SdlEventSource()
 			      SDL_JoystickName(joystick_num)
 #endif
 			     );
+// HACK by someone who has never written a line of C or C++ in his life
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+				if (totallynotstrcmp(SDL_JoystickName(_joystick), charPS3) == 0) {
+					debug("Setting PS3 controller button assignments...");
+					setPS3buttons();
+				} else if (totallynotstrcmp(SDL_JoystickName(_joystick), charX360) == 0) {
+					debug("Setting XBOX360 controller button assignments...");
+					setX360buttons();
+				} else if (totallynotstrcmp(SDL_JoystickName(_joystick), charBuffaloSNES) == 0) {
+					debug("Setting Buffalo SNES controller button assignments...");
+					setBuffaloSNESbuttons();
+				} else if (totallynotstrcmp(SDL_JoystickName(_joystick), charF300) == 0) {
+					debug("Setting Mayflash Arcade Fightstick F300 button assignments...");
+					setF300buttons();
+				} else if (totallynotstrcmp(SDL_JoystickName(_joystick), charRaphClassic) == 0) {
+					debug("Setting Raphnet Classic to USB adapter button assignments...");
+					setRaphClassicbuttons();
+				} else {
+					debug("Using default button assignments...");
+				}
+#endif
+// END HACK
 		} else {
 			warning("Invalid joystick: %d", joystick_num);
 		}
@@ -812,25 +910,26 @@ bool SdlEventSource::handleJoyButtonDown(SDL_Event &ev, Common::Event &event) {
 		event.type = Common::EVENT_RBUTTONDOWN;
 		return processMouseEvent(event, _km.x / MULTIPLIER, _km.y / MULTIPLIER);
 	} else {
+// HACK replace SWITCH with IF statements
 		event.type = Common::EVENT_KEYDOWN;
-		switch (ev.jbutton.button) {
-		case JOY_BUT_ESCAPE:
+		if (ev.jbutton.button == JOY_BUT_ESCAPE) {
 			event.kbd.keycode = Common::KEYCODE_ESCAPE;
 			event.kbd.ascii = mapKey(SDLK_ESCAPE, (SDLMod)ev.key.keysym.mod, 0);
-			break;
-		case JOY_BUT_PERIOD:
+		} else if (ev.jbutton.button == JOY_BUT_PERIOD) {
 			event.kbd.keycode = Common::KEYCODE_PERIOD;
 			event.kbd.ascii = mapKey(SDLK_PERIOD, (SDLMod)ev.key.keysym.mod, 0);
-			break;
-		case JOY_BUT_SPACE:
+		} else if (ev.jbutton.button == JOY_BUT_SPACE) {
 			event.kbd.keycode = Common::KEYCODE_SPACE;
 			event.kbd.ascii = mapKey(SDLK_SPACE, (SDLMod)ev.key.keysym.mod, 0);
-			break;
-		case JOY_BUT_F5:
+		} else if (ev.jbutton.button == JOY_BUT_F5) {
 			event.kbd.keycode = Common::KEYCODE_F5;
 			event.kbd.ascii = mapKey(SDLK_F5, (SDLMod)ev.key.keysym.mod, 0);
-			break;
+		} 
+#ifdef ENABLE_VKEYBD
+		else if (ev.jbutton.button == JOY_BUT_VKBD) {
+			event.type = Common::EVENT_VIRTUAL_KEYBOARD;
 		}
+#endif		
 		return true;
 	}
 }
@@ -843,24 +942,20 @@ bool SdlEventSource::handleJoyButtonUp(SDL_Event &ev, Common::Event &event) {
 		event.type = Common::EVENT_RBUTTONUP;
 		return processMouseEvent(event, _km.x / MULTIPLIER, _km.y / MULTIPLIER);
 	} else {
+// HACK replace SWITCH with IF statements
 		event.type = Common::EVENT_KEYUP;
-		switch (ev.jbutton.button) {
-		case JOY_BUT_ESCAPE:
+		if (ev.jbutton.button == JOY_BUT_ESCAPE) {
 			event.kbd.keycode = Common::KEYCODE_ESCAPE;
 			event.kbd.ascii = mapKey(SDLK_ESCAPE, (SDLMod)ev.key.keysym.mod, 0);
-			break;
-		case JOY_BUT_PERIOD:
+		} else if (ev.jbutton.button == JOY_BUT_PERIOD) {
 			event.kbd.keycode = Common::KEYCODE_PERIOD;
 			event.kbd.ascii = mapKey(SDLK_PERIOD, (SDLMod)ev.key.keysym.mod, 0);
-			break;
-		case JOY_BUT_SPACE:
+		} else if (ev.jbutton.button == JOY_BUT_SPACE) {
 			event.kbd.keycode = Common::KEYCODE_SPACE;
 			event.kbd.ascii = mapKey(SDLK_SPACE, (SDLMod)ev.key.keysym.mod, 0);
-			break;
-		case JOY_BUT_F5:
+		} else if (ev.jbutton.button == JOY_BUT_F5) {
 			event.kbd.keycode = Common::KEYCODE_F5;
 			event.kbd.ascii = mapKey(SDLK_F5, (SDLMod)ev.key.keysym.mod, 0);
-			break;
 		}
 		return true;
 	}
